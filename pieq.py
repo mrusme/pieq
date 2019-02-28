@@ -9,7 +9,29 @@ import sys
 import time
 import _thread
 import http.client
+import socket
 import json
+
+client_influxdb = None
+if os.getenv("INFLUXDB_ENABLED", "0") == "1":
+    from influxdb import InfluxDBClient
+
+    influxdb_host = os.getenv("INFLUXDB_HOST", "localhost")
+    influxdb_port = int(os.getenv("INFLUXDB_PORT", "8086"))
+    influxdb_user = os.getenv("INFLUXDB_USERNAME", "root")
+    influxdb_pass = os.getenv("INFLUXDB_PASSWORD", "root")
+    influxdb_ssl = (os.getenv("INFLUXDB_SSL", "1") == "1")
+    influxdb_vssl = (os.getenv("INFLUXDB_VERIFY_SSL", "1") == "1")
+    influxdb_db = os.getenv("INFLUXDB_DATABASE", None)
+    client_influxdb = InfluxDBClient( \
+        host=influxdb_host, \
+        port=influxdb_port, \
+        username=influxdb_user, \
+        password=influxdb_pass, \
+        database=influxdb_db, \
+        ssl=influxdb_ssl, \
+        verify_ssl=influxdb_vssl \
+    )
 
 import urllib
 from sense_hat import SenseHat
@@ -282,6 +304,8 @@ def animate_wave():
         iterator += 1
         time.sleep(.1)
 
+def client_influxdb_send(json_data):
+    return client_influxdb.write_points(json_data)
 
 def http_post(host, route, data, headers):
     connection = http.client.HTTPSConnection(host)
@@ -542,6 +566,28 @@ def thread_animation(animation_name):
     lock_ui.release()
     _thread.exit()
 
+def notify_influxdb(measures):
+    global orientation
+    json_data = []
+
+    if os.getenv("INFLUXDB_ENABLED") != "1":
+        return False
+
+    for measurement in measures:
+        json_data.append({
+            "measurement": "pieq-" + measurement,
+            "tags": {
+                "host": socket.gethostname(),
+                "orientation": orientation
+            },
+            "time": datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(),
+            "fields": {
+                measurement: measures[measurement]
+            }
+        })
+
+    return client_influxdb_send(json_data)
+
 def notify_pushover(measures, conditions):
     if conditions is None:
         conditions = {}
@@ -568,6 +614,7 @@ def thread_notify():
 
     while 1:
         lock_measures.acquire()
+        notify_influxdb(measures)
         conditions_pushover = notify_pushover(measures, conditions_pushover)
         lock_measures.release()
         time.sleep(5)
