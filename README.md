@@ -20,6 +20,19 @@ A service written in Python that makes use of the [Astro Pi Sense HAT](https://w
 
 ## Configuration
 
+### Monitoring (via [InfluxDB](https://www.influxdata.com/time-series-platform/influxdb/) and [Grafana](https://grafana.com))
+
+pieq supports sending measurements into InfluxDB and make use of this data through Grafana. In order to enable that, you need to configure the InfluxDB database:
+
+- `INFLUXDB_ENABLED=1`
+- `INFLUXDB_HOST=<host>`
+- `INFLUXDB_PORT=8086`
+- `INFLUXDB_USERNAME=<user or empty>`
+- `INFLUXDB_PASSWORD=<password or empty>`
+- `INFLUXDB_SSL=1`
+- `INFLUXDB_VERIFY_SSL=1`
+- `INFLUXDB_DATABASE=<database>`
+
 ### Notifications (via [Pushover](https://pushover.net))
 
 In order to enable notifications via Pushover you need to [create a new application on Pushover](https://pushover.net/apps/build).
@@ -36,11 +49,11 @@ Example: `PUSHOVER_THRESHOLDS_TEMPERATURE=20,30`
 
 In this case, you'd receive a pushover notification as soon as the temperature drops beneath 20 degrees (celsius) and as soon as the temperature rises above 30 degrees (celsius).
 
-## Running
+## Run manually
 
 Set all necessary environment variables and execute `./pieq.py`.
 
-## Running on boot
+## Run on boot
 
 In order to run pieq on boot you need to perform a few steps on your Raspberry Pi:
 
@@ -56,3 +69,7 @@ update-rc.d pieq defaults
 ```
 
 Now you can reboot your Raspberry with pieq being automatically run.
+
+## Feedback
+
+Feel free to [tweet me](https://twitter.com/mrusme) if you have feedback to share!
