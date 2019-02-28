@@ -20,8 +20,22 @@ A service written in Python that makes use of the [Astro Pi Sense HAT](https://w
 
 ## Configuration
 
-Check out [.env](.env) for possible environment variables.
+### Notifications (via [Pushover](https://pushover.net))
+
+In order to enable notifications via Pushover you need to [create a new application on Pushover](https://pushover.net/apps/build).
+Then set the following environment variables:
+
+- `PUSHOVER_APP_TOKEN=<The API Token/key of the Pushover application you just created>`
+- `PUSHOVER_USER_KEY=<Your Pushover user key>`
+- `PUSHOVER_PRIORITY=<Possible values: -2, -1, 0, 1, 2>`
+- `PUSHOVER_ENABLED=1`
+
+Also, you need to specify the notification thresholds. Those can be specified through setting `PUSHOVER_THRESHOLDS_TEMPERATURE`, `PUSHOVER_THRESHOLDS_HUMIDITY` and `PUSHOVER_THRESHOLDS_PRESSURE`. The format looks identical for each of those: `<minimum>,<maximum>`. 
+
+Example: `PUSHOVER_THRESHOLDS_TEMPERATURE=20,30`
+
+In this case, you'd receive a pushover notification as soon as the temperature drops beneath 20 degrees (celsius) and as soon as the temperature rises above 30 degrees (celsius).
 
 ## Running
 
-Simply execute `./pieq.py`.
+Set all necessary environment variables and execute `./pieq.py`.
