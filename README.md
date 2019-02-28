@@ -20,7 +20,7 @@ A service written in Python that makes use of the [Astro Pi Sense HAT](https://w
 
 ## Configuration
 
-Nothing to configure. Yet.
+Check out [.env](.env) for possible environment variables.
 
 ## Running
 

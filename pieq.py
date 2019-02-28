@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -7,10 +7,11 @@ import datetime
 import os
 import sys
 import time
-import thread
-from urllib import urlencode
+import _thread
+import http.client
+import json
 
-import urllib2
+import urllib
 from sense_hat import SenseHat
 
 views = [
@@ -20,10 +21,10 @@ views = [
     "thp"
 ]
 
-lock_ui = thread.allocate_lock()
-lock_measures = thread.allocate_lock()
-lock_orientation = thread.allocate_lock()
-lock_animation_run = thread.allocate_lock()
+lock_ui = _thread.allocate_lock()
+lock_measures = _thread.allocate_lock()
+lock_orientation = _thread.allocate_lock()
+lock_animation_run = _thread.allocate_lock()
 
 current_view = 0
 measures = {}
@@ -281,6 +282,33 @@ def animate_wave():
         iterator += 1
         time.sleep(.1)
 
+
+def http_post(host, route, data, headers):
+    connection = http.client.HTTPSConnection(host)
+
+    connection.request('POST', route, data, headers)
+
+    response = connection.getresponse()
+    print(response.read().decode())
+    return response.status
+
+def client_pushover_send(title, message):
+    if os.getenv("PUSHOVER_ENABLED") != "1":
+        return 200
+
+    return http_post(
+        "api.pushover.net",
+        "/1/messages.json",
+        urllib.parse.urlencode({
+            "token": os.getenv("PUSHOVER_APP_TOKEN"),
+            "user": os.getenv("PUSHOVER_USER_KEY"),
+            "priority": os.getenv("PUSHOVER_PRIORITY"),
+            "title": title,
+            "message": message
+        }),
+        { "Content-type": "application/x-www-form-urlencoded" }
+    )
+
 # "Borrowed" from https://github.com/johnwargo/pi_weather_station
 def get_cpu_temperature():
     res = os.popen('vcgencmd measure_temp').readline()
@@ -517,7 +545,34 @@ def thread_animation(animation_name):
     while not lock_animation_run.acquire(False):
         animations.get(animation_name, "Invalid animation")()
     lock_ui.release()
-    thread.exit()
+    _thread.exit()
+
+def notify_pushover(measures, conditions):
+    if conditions is None:
+        conditions = {}
+
+    for measurement in measures:
+        envvar_name = "PUSHOVER_THRESHOLDS_" + measurement.upper()
+        threshold_values = os.getenv(envvar_name).rsplit(",")
+
+        if len(threshold_values) == 2 \
+            and conditions.get(measurement, { "only_after": datetime.datetime.now() }).get("only_after") < datetime.datetime.now() \
+            and (measures[measurement] < float(threshold_values[0]) or measures[measurement] > float(threshold_values[1])):
+            client_pushover_send(measurement.capitalize(), "Current " + measurement + " is: " + str(measures[measurement]))
+            conditions[measurement] = {
+                "only_after": (datetime.datetime.now() + datetime.timedelta(minutes=30))
+            }
+    return conditions
+
+def thread_notify():
+    global measures
+    conditions_pushover = {}
+
+    while 1:
+        lock_measures.acquire()
+        conditions_pushover = notify_pushover(measures, conditions_pushover)
+        lock_measures.release()
+        time.sleep(5)
 
 def main():
     sense.set_imu_config(False, False, True)
@@ -525,12 +580,13 @@ def main():
     sense.clear()
 
     lock_animation_run.acquire()
-    thread.start_new_thread(thread_animation, ("wifi",))
+    _thread.start_new_thread(thread_animation, ("wifi",))
     ping("google.com")
     lock_animation_run.release()
 
-    thread.start_new_thread(thread_measure, ())
-    thread.start_new_thread(thread_input, ())
+    _thread.start_new_thread(thread_measure, ())
+    _thread.start_new_thread(thread_input, ())
+    _thread.start_new_thread(thread_notify, ())
     run()
     print("Leaving main()")
 
