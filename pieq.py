@@ -293,9 +293,6 @@ def http_post(host, route, data, headers):
     return response.status
 
 def client_pushover_send(title, message):
-    if os.getenv("PUSHOVER_ENABLED") != "1":
-        return 200
-
     return http_post(
         "api.pushover.net",
         "/1/messages.json",
@@ -487,7 +484,6 @@ def get_orientation():
     elif accel_rnd_x == 1 and accel_rnd_y == 0 and accel_rnd_z == 0:
         angle = 270
 
-    print(angle)
     return angle
 
 def set_orientation():
@@ -502,14 +498,13 @@ def run():
     global orientation
 
     while 1:
-        print("Rendering ...")
         lock_measures.acquire()
         render(measures, "none")
         lock_measures.release()
         time.sleep(5)
 
 def ping(host):
-    while os.system("ping -c 1 " + host) != 0:
+    while os.system("ping -c 1 " + host + " > /dev/null") != 0:
         print("Could not reach " + host + ", retrying in 5 ...")
         time.sleep(5)
 
@@ -550,6 +545,9 @@ def thread_animation(animation_name):
 def notify_pushover(measures, conditions):
     if conditions is None:
         conditions = {}
+
+    if os.getenv("PUSHOVER_ENABLED") != "1":
+        return conditions
 
     for measurement in measures:
         envvar_name = "PUSHOVER_THRESHOLDS_" + measurement.upper()
