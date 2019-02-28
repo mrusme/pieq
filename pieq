@@ -1,0 +1,34 @@
+#!/bin/sh
+#/etc/init.d/pieq
+
+### BEGIN INIT INFO
+# Provides:          pieq
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Startups script for pieq.py
+# Description:       https://github.com/mrusme/pieq
+### END INIT INFO
+
+if [ -f /etc/pieq ]
+then
+    . /etc/pieq
+fi
+
+case "$1" in
+    start)
+        echo "Starting pieq"
+        nohup /usr/local/bin/pieq.py &
+        ;;
+    stop)
+        echo "Stopping pieq"
+        kill $(ps aux | grep "[p]ieq" | awk '{ print $2 }')
+        ;;
+    *)
+        echo "Usage: /etc/init.d/pieq {start|stop}"
+        exit 1
+        ;;
+esac
+
+exit 0
