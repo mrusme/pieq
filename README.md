@@ -39,3 +39,20 @@ In this case, you'd receive a pushover notification as soon as the temperature d
 ## Running
 
 Set all necessary environment variables and execute `./pieq.py`.
+
+## Running on boot
+
+In order to run pieq on boot you need to perform a few steps on your Raspberry Pi:
+
+```bash
+# Execute these commands ON YOUR RASPBERRY PI
+su - # or sudo su -
+cd /path/to/the/local/copy/of/this/repo
+cp ./pieq.py /usr/local/bin/pieq.py
+cp ./pieq /etc/init.d/pieq
+cp ./.env /etc/pieq
+vi /etc/pieq # and edit to your needs
+update-rc.d pieq defaults
+```
+
+Now you can reboot your Raspberry with pieq being automatically run.
