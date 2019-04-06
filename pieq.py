@@ -444,6 +444,14 @@ def render_thp_clicked(measures):
     render_humidity_clicked(measures)
     render_pressure_clicked(measures)
 
+def render_none(measures):
+    sense.clear()
+
+def render_none_clicked(measures):
+    render_temperature_clicked(measures)
+    render_humidity_clicked(measures)
+    render_pressure_clicked(measures)
+
 def render(measures, direction):
     global current_view
 
