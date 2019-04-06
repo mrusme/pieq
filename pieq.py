@@ -40,7 +40,8 @@ views = [
     "temperature",
     "humidity",
     "pressure",
-    "thp"
+    "thp",
+    "none"
 ]
 
 lock_ui = _thread.allocate_lock()
