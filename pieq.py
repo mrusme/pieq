@@ -36,6 +36,8 @@ if os.getenv("INFLUXDB_ENABLED", "0") == "1":
 import urllib
 from sense_hat import SenseHat
 
+auto_none_mode = os.getenv("AUTO_NONE_MODE", None)
+
 views = [
     "temperature",
     "humidity",
@@ -455,9 +457,18 @@ def render_none_clicked(measures):
 
 def render(measures, direction):
     global current_view
+    global auto_none_mode
+    now_str = datetime.datetime.now().strftime('%H:%M')
 
     if measures == {}:
         return False
+
+    if auto_none_mode != None:
+        none_mode_from_until = str.split(auto_none_mode, "-")
+        if none_mode_from_until[0] == now_str:
+            current_view = "none"
+        elif none_mode_from_until[1] == now_str:
+            current_view = "thp"
 
     renderfn = "render_" + views[current_view]
 
