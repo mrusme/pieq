@@ -49,6 +49,10 @@ Example: `PUSHOVER_THRESHOLDS_TEMPERATURE=20,30`
 
 In this case, you'd receive a pushover notification as soon as the temperature drops beneath 20 degrees (celsius) and as soon as the temperature rises above 30 degrees (celsius).
 
+### Auto None Mode (a.k.a "Night Mode")
+
+In order to automatically disable the LED display at night, it's possible to have pieq automatically set the "none" display mode from a specific time until a specific time. You can do this by configuring `AUTO_NONE_MODE=<from hour>:<from minute>-<until hour>:<until minute>`, e.g. `AUTO_NONE_MODE=23:15-07:00`.
+
 ## Run manually
 
 Set all necessary environment variables and execute `./pieq.py`.
