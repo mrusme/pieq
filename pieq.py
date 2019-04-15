@@ -464,11 +464,11 @@ def render(measures, direction):
         return False
 
     if auto_none_mode != None:
-        none_mode_from_until = str.split(auto_none_mode, "-")
-        if none_mode_from_until[0] == now_str:
-            current_view = "none"
-        elif none_mode_from_until[1] == now_str:
-            current_view = "thp"
+        none_mode_from, none_mode_until = str.split(auto_none_mode, "-")
+        if none_mode_from == now_str:
+            current_view = 4
+        elif none_mode_until == now_str:
+            current_view = 3
 
     renderfn = "render_" + views[current_view]
 
