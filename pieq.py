@@ -66,8 +66,8 @@ humidity_min = 0
 humidity_scale = humidity_max - humidity_min
 humidity_step = int(round(humidity_scale / leds_number))
 
-pressure_max = 232 # so that the usual pressure of 101 kPa results in 4 leds lighting up
-pressure_min = 30 # ... if anyone should be interested in running this on the top of Mount Everest
+pressure_max = 2320 # so that the usual pressure of 1010 hPa results in 4 leds lighting up
+pressure_min = 300 # ... if anyone should be interested in running this on the top of Mount Everest
 pressure_scale = pressure_max - pressure_min
 pressure_step = int(round(pressure_scale / leds_number))
 
@@ -429,7 +429,7 @@ def render_pressure(measures):
     sense.set_pixels(get_level("yellow", lvl))
 
 def render_pressure_clicked(measures):
-    sense.show_message(str(measures["pressure"]) + "kPa")
+    sense.show_message(str(measures["pressure"]) + "hPa")
 
 def render_thp(measures):
     global temperature_step
@@ -494,8 +494,8 @@ def get_measures():
     calculated_temperature = get_calculated_temperature()
     temperature = round(calculated_temperature, 1)
     humidity = round(sense.get_humidity(), 0)
-    pressure = round(sense.get_pressure() / 10, 1)
-    print("Temp: %s C, Humidity: %s% %, Pressure: %s kPa" % (temperature, humidity, pressure))
+    pressure = round(sense.get_pressure(), 1)
+    print("Temp: %s C, Humidity: %s% %, Pressure: %s hPa" % (temperature, humidity, pressure))
     return {
         "temperature": temperature,
         "humidity": humidity,
@@ -588,25 +588,30 @@ def thread_animation(animation_name):
 
 def notify_influxdb(measures):
     global orientation
-    json_data = []
+    data_list = []
 
     if os.getenv("INFLUXDB_ENABLED") != "1":
         return False
 
-    for measurement in measures:
-        json_data.append({
-            "measurement": "pieq-" + measurement,
-            "tags": {
-                "host": socket.gethostname(),
-                "orientation": orientation
-            },
-            "time": datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(),
-            "fields": {
-                measurement: measures[measurement]
-            }
-        })
+    if len(measures) == 0:
+        return False
 
-    return client_influxdb_send(json_data)
+    measurement_data = {
+        "measurement": "pieq",
+        "tags": {
+            "host": socket.gethostname(),
+            "orientation": orientation
+        },
+        "time": datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(),
+        "fields": {
+        }
+    }
+
+    for measurement in measures:
+        measurement_data["fields"][measurement] = measures[measurement]
+
+    data_list.append(measurement_data)
+    return client_influxdb_send(data_list)
 
 def notify_pushover(measures, conditions):
     if conditions is None:
